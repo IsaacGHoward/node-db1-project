@@ -1,23 +1,54 @@
-const router = require('express').Router()
+const router = require('express').Router();
+const db = require('./accounts-model');
+const middleware = require('./accounts-middleware');
+
 
 router.get('/', async (req, res, next) => {
-  // DO YOUR MAGIC
+  db.getAll()
+  .then((respon) => {
+    res.send(respon);
+  })
+  .catch((err) => {
+    next(err);
+  })
 })
 
-router.get('/:id', (req, res, next) => {
-  // DO YOUR MAGIC
+router.get('/:id', middleware.checkAccountId, (req, res, next) => {
+  res.send(req.account);
 })
 
-router.post('/', (req, res, next) => {
-  // DO YOUR MAGIC
+router.post('/', middleware.checkAccountPayload, middleware.checkAccountNameUnique, (req, res, next) => {
+  db.create({...req.body, name: req.body.name.trim()})
+  .then((response) => {
+    res.send(response);
+  })
+  .catch((err) => {
+    next(err);
+  })
+  
 })
 
-router.put('/:id', (req, res, next) => {
-  // DO YOUR MAGIC
+router.put('/:id', middleware.checkAccountId, (req, res, next) => {
+  db.updateById(req.params.id, req.body)
+  .then((response) => {
+    db.getById(req.params.id)
+    .then((resp) => {
+      res.send(resp);
+    })
+  })
+  .catch((err) => {
+    next(err);
+  })
 });
 
-router.delete('/:id', (req, res, next) => {
-  // DO YOUR MAGIC
+router.delete('/:id', middleware.checkAccountId,  (req, res, next) => {
+  db.deleteById(req.params.id)
+  .then(() => {
+    res.send(req.account);
+  })
+  .catch((err) => {
+    next(err);
+  })
 })
 
 router.use((err, req, res, next) => { // eslint-disable-line
